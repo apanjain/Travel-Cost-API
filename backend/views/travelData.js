@@ -11,7 +11,7 @@ function getTravelData(req, res) {
 
   let p = axios.get(API_URL, {
     params: {
-      apiKey: process.env.here_api_key,
+      apiKey: process.env.api_key,
       alternatives: 10,
       destination: dest,
       origin: origin,

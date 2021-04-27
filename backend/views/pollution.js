@@ -4,7 +4,6 @@ const fs = require("fs");
 const util = require("util");
 const path = require("path");
 const cities = require("../utils/cities");
-const { getPM2_5 } = require("../controllers/getPM2_5");
 const { JSDOM } = jsdom;
 const readFile = util.promisify(fs.readFile);
 
@@ -82,16 +81,5 @@ exports.getPollutionData = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.json({ msg: `Pollution Data unavailable` }).status(404);
-  }
-};
-
-exports.getPMData = async (req, res) => {
-  const lat = req.params.lat;
-  const lng = req.params.lng;
-  if (lat && lng) {
-    const pm = await getPM2_5(lat, lng);
-    res.json({ pm }).status(200);
-  } else {
-    res.json({ msg: "Invalid Data" }).status(400);
   }
 };
