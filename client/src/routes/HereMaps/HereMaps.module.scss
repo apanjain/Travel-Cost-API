@@ -1,6 +1,193 @@
+body{
+  margin: 0px;
+}
+
+#input1{
+width: 79%;
+height: 15px;
+margin: 10px;
+padding: 5px;
+border: none;
+color:#666666;
+font-size:medium;
+}
+
+#input2{
+width: 79%;
+height: 15px;
+margin: 10px;
+padding: 5px;
+border: none;
+color:#666666;
+font-size:medium;
+}
+
+.auto-container {
+/* display: flex; */
+justify-content: center;
+/* border: 2px solid red; */
+/* width: 85%; */
+}
+
+.option {
+display: flex;
+/* align-items: center; */
+justify-content: space-between;
+width: 85%;
+border:1px solid #108898;
+color:#666666;
+border-radius: 5px;
+font-size: 14px;
+padding: 5px;
+float: right;
+}
+
+.icon{
+color:rgb(139, 137, 137);
+margin: 1%;
+  /* float:left; */
+vertical-align:middle;
+position: absolute;
+top:2.5%;
+display: inline;
+}
+
+.icon:hover{
+cursor: pointer;
+}
+
+.icon1{
+color:#108898;
+vertical-align:middle;
+margin: 2px;
+}
+
+.origin{
+vertical-align: middle;
+/* border:1px solid red; */
+display: inline;
+}
+
+.input5{
+border:1px solid rgb(185, 183, 183);
+display: inline;
+border-radius: 5px;
+margin:10px;
+margin-bottom: 0px;
+float:right;
+width:85%;
+}
+
+.input6{
+border:1px solid rgb(185, 183, 183);
+border-radius: 5px;
+margin:10px;
+margin-bottom: 0px;
+float:right;
+width:85%;
+}
+
+.clearfix{
+clear:both;
+}
+
+#bottom3{
+width:85%;
+/* border:1px solid red; */
+float: right;
+margin:10px;
+/* margin-bottom: 0px; */
+}
+
+#timemenu{
+float:right;
+}
+
+#pickdateandtime{
+width:20px;
+margin:5px;
+/* margin-right: 15px; */
+}
+
+#time{
+/* float: right; */
+margin: 10px;
+margin-right: 0px;
+height: 30px;
+}
+
+#stopwatch{
+/* float: right; */
+margin: 5px;
+margin-right: 0px;
+color:#108898;
+}
+
+#PMV{
+line-height: 25px;
+margin: 5px;
+margin-left: 0px;
+border-radius: 15px;
+display: inline;
+color: rgb(139, 137, 137);
+}
+
+#CV{
+line-height: 25px;
+margin: 5px;
+border-radius: 15px;
+display: inline;
+/* color: rgb(244, 244, 245); */
+}
+
+#bottombar{
+/* border: 1px solid red; */
+text-align: center;
+position: relative;
+padding: 10px;
+}
+
+.prevb{
+color:#108898;
+font-size: 30px;
+position: absolute;
+top:12px;
+left:15px;
+}
+
+.prevb:hover{
+cursor:pointer;
+}
+
+.nextb:hover{
+cursor:pointer;
+}
+
+.nextb{
+color:#108898;
+font-size: 30px;
+position: absolute;
+top:12px;
+right: 15px;
+}
+
+#bottombart{
+display: inline;
+}
+
+#bshow{
+color:#666666;
+font-size: 18px;
+}
+
+#bshow6{
+color:#108898;
+font-size: 13px;
+}
+
 .hereMaps{
-    width: 100vw; 
-    height:100vh; 
+    width: 100%; 
+    height:65vh; 
     background: grey;
     position:relative  
 }
