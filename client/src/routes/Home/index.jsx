@@ -22,7 +22,7 @@ L.Icon.Default.mergeOptions({
 });
 
 
-const token = "516b6b62876af81c27811d5b120aa26e1a34c43d";
+const token = process.env.REACT_APP_WAQI_API_KEY;
 var lat1 = 28.086520, lat2 = 28.921631, long1 = 76.730347, long2 = 77.631226;
 const url = `https://api.waqi.info/map/bounds/?latlng=${lat1},${long1},${lat2},${long2}&token=${token}`
 
