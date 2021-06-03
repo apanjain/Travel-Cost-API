@@ -151,7 +151,7 @@ const Home = () => {
                 }
                 )
                 y += 1;
-                if (y % 2 != 0) {
+                if (y % 2 !== 0) {
 
                     for (let j in rows) {
                         idwMarkers[j] = L.idwMarker([parseFloat(rows[j][0]), parseFloat(rows[j][1])], {
