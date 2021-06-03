@@ -1,4 +1,8 @@
 import L from 'leaflet';
+import { map } from 'leaflet';
+import '../App.css';
+import Places from "../../../assets/images/places.png";
+
 
 
 L.IdwMarker = L.CircleMarker.extend({
@@ -9,6 +13,9 @@ L.IdwMarker = L.CircleMarker.extend({
     p: 2,
     // points: [[lat, lon, value]]
   },
+
+
+
   getIDW: function () {
     let numberOfDataType = this.options.dataOptions.length;
     let IDWValues = [[this._latlng.lat, this._latlng.lng]];
@@ -70,22 +77,17 @@ L.Control.DisplayIDW = L.Control.extend({
     L.setOptions(this, options);
   },
   onAdd: function () {
-    let container = L.DomUtil.create('div', 'idw-display leaflet-control-layers');
+    let container = L.DomUtil.create('div', 'idw-display leaflet-control-layers1');
     container.innerHTML =
-      `<div class="leaflet-control-layers-base">
-        <table>
-          <tr>
-            <td>GPS: </td>
-            <td>${Math.round(this.values[0][0] * 1000.0) / 1000.0}, ${Math.round(this.values[0][1] * 1000.0) / 1000.0}</td>
-          </tr>
-          <tr>
-            <td>AQI: </td>
-            <td>${this.values[1]}</td>
-          </tr>
-        </table>
+      `<div class="leaflet-control-layers-base1">
+      <div class="property-card">
+      <div id="aqi">${this.values[1]}<a> AQI</a></div>
+            <div id="gps"><br><p>Latitude: ${Math.round(this.values[0][0] * 1000.0) / 1000.0}</p>
+            <p>Longitude: ${Math.round(this.values[0][1] * 1000.0) / 1000.0}</p></div>
       </div>
-      <div>
-        <a id="idw-display-close-button" class="leaflet-popup-close-button" href="#close">×</a>
+      
+      
+        <a id="idw-display-close-button" class="leaflet-popup-close-button" >×</a>
       </div>`;
     return container;
   }
@@ -93,6 +95,25 @@ L.Control.DisplayIDW = L.Control.extend({
 
 L.control.displayIDW = function (values, options) {
   return new L.Control.DisplayIDW(values, options);
+};
+
+//var info;
+
+L.Control.Displaymap = L.Control.extend({
+
+  onAdd: function () {
+    let container = L.DomUtil.create('button', 'places_markers');
+    container.innerHTML =
+      ` <a id=map1><button id="places"><div id="icon_places"><img id="icon2" src=${Places}>
+      </div>
+        <div><p id="text1_places">Places</p></div>
+      </button></a>`;
+    return container;
+  },
+
+});
+L.control.displaymap = function () {
+  return new L.Control.Displaymap();
 };
 
 L.Control.IDWLegend = L.Control.extend({
@@ -116,21 +137,21 @@ L.Control.IDWLegend = L.Control.extend({
     for (let i = 0; i < gradientsLength; i++) {
       let color = this.gradients[i].value;
       gradesLabels +=
-        `<i style="background:${color};">&nbsp;&nbsp;&nbsp;&nbsp;</i>&nbsp;` +
-        `${this._formatNumber(numLength, this.gradients[i].key)}` +
-        `${(this.gradients[i + 1] ?
-          `&nbsp;~&nbsp;${this._formatNumber(numLength, this.gradients[i + 1].key)}` : '+')}<br>`;
+        `<i style="background:${color};">&nbsp;&nbsp;${this._formatNumber(numLength, this.gradients[i].key)}`
+        + `${(this.gradients[i + 1] ?
+          `-${this._formatNumber(numLength, this.gradients[i + 1].key)}` : '+')}&nbsp;` +
+        `&nbsp;&nbsp;</i>`
+
+
     }
     container.innerHTML =
-      `<div class="leaflet-control-layers-base">
-        <table>
-          <tr>
-            <td>${gradesLabels}</td>
-          </tr>
-          <tr>
-            <td>${this.unit}</td>
-          </tr>
-        </table>
+      `<div class="leaflet-control-layers-base" id="grads">
+       
+          <p>
+            ${gradesLabels}
+            </p>
+          
+        
       </div>`;
 
     return container;
@@ -160,14 +181,6 @@ L.Control.IDWLegend = L.Control.extend({
 L.control.IDWLegend = function (gradients, options) {
   return new L.Control.IDWLegend(gradients, options);
 };
-
-/*
- (c) 2016, Manuel Bär (www.geonet.ch)
- Leaflet.idw, a tiny and fast inverse distance weighting plugin for Leaflet.
- Largely based on the source code of Leaflet.heat by Vladimir Agafonkin (c) 2014
- https://github.com/Leaflet/Leaflet.heat
- version: 0.0.2
-*/
 
 
 function simpleidw(canvas) {
@@ -403,6 +416,10 @@ L.IdwLayer = (L.Layer ? L.Layer : L.Class).extend({
     map.addLayer(this);
     return this;
   },
+
+  // remove: function () {
+  //   map.remove();
+  // },
 
   _initCanvas: function () {
     var canvas = this._canvas = L.DomUtil.create('canvas', 'leaflet-idwmap-layer leaflet-layer');
@@ -673,4 +690,7 @@ L.idwLayer = function (latlngs, options) {
   return new L.IdwLayer(latlngs, options);
 };
 
+
 export default L
+
+

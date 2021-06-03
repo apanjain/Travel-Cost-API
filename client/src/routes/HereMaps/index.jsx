@@ -11,7 +11,10 @@ import LOCATIONS from "./locations";
 import Button from "@material-ui/core/Button";
 import { KeyboardDateTimePicker, MuiPickersUtilsProvider, } from "@material-ui/pickers";
 import DateMomentUtils from '@date-io/moment';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
+// import * as FaIcons from 'react-icons/fa';
+// import * as AiIcons from 'react-icons/ai';
+import SideBar from './Sidebar';
 
 
 
@@ -22,21 +25,22 @@ const HereMaps = () => {
   const mapRef = useRef(null);
   const [map, setMap] = useState(null);
   const [routes, setRoutes] = useState(null);
-  const [showPm, setShowPm] = useState(true);
+  const [showPm, setShowPm] = useState(false);
   const [currentRoute, setCurrentRoute] = useState(0);
   const [singleRoute, setSingleRoute] = useState(false);
+  const [totalroutes, setTotalRoutes] = useState(1);
   // const [afterMinutes, setAfterMinutes] = useState(0);
-  // const [fetching, setFetching] = useState(false);
+  const [fetching, setFetching] = useState(false);
   const mapObjects = useRef([]);
 
   const [places, setPlaces] = useState([]);
   const [display, setDisplay] = useState(false);
   const [display1, setDisplay1] = useState(false);
-  const [bcol, setCol] = useState('#E8F4F5');
-  const [tcol, setColt] = useState('#108898');
+  var bcol = '#E8F4F5';
+  var tcol = '#108898';
 
-  const [bcold, setCold] = useState('rgb(255,255,255)');
-  const [tcold, setColtd] = useState('#666666');
+  var bcold = 'rgb(255,255,255)';
+  var tcold = '#666666';
 
   const wrapperRef = useRef(null);
   const wrapperRef1 = useRef(null);
@@ -84,10 +88,18 @@ const HereMaps = () => {
 
   const addMarkersToMap = useCallback((map, locations = []) => {
     if (!map) return;
+    var group = new H.map.Group();
     locations.forEach((location) => {
       const locationMarker = new H.map.Marker(location);
-      map.addObject(locationMarker);
-      mapObjects.current = [...mapObjects.current, locationMarker];
+      group.addObject(locationMarker);
+      // map.addObject(locationMarker);
+      // mapObjects.current = [...mapObjects.current, locationMarker];
+    });
+
+    mapObjects.current = [...mapObjects.current, group];
+    map.addObject(group);
+    map.getViewModel().setLookAtData({
+      bounds: group.getBoundingBox()
     });
   }, []);
 
@@ -111,7 +123,7 @@ const HereMaps = () => {
   async function getLattLong(location_id) {
     const response = await fetch(burl + location_id + curl + apik + apikey);
     const data = await response.json();
-
+    setInv(0);
     // console.log(data);
     setOriginv({ lat: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["latitude"], lng: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["longitude"] });
     // addMarkersToMap(map, [{ lat: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["latitude"], lng: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["longitude"] }]);
@@ -120,7 +132,7 @@ const HereMaps = () => {
   async function getLattLongd(location_id) {
     const response = await fetch(burl + location_id + curl + apik + apikey);
     const data = await response.json();
-
+    setInv(0);
     // console.log(data);
     setDestv({ lat: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["latitude"], lng: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["longitude"] });
     // addMarkersToMap(map, [{ lat: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["latitude"], lng: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["longitude"] }]);
@@ -152,18 +164,13 @@ const HereMaps = () => {
     setDisplay1(false);
   };
 
-  function customo() {
-    setCol('#E8F4F5');
-    setColt('#108898');
-    setCold('rgb(255,255,255)');
-    setColtd('#666666');
-  }
-
-  function customd() {
-    setCold('#E8F4F5');
-    setColtd('#108898');
-    setCol('rgb(255,255,255)');
-    setColt('#666666');
+  function setindexval(inc) {
+    if (routes.length !== 0) {
+      if (inc === false)
+        setInv(((inval - 1) % totalroutes + totalroutes) % totalroutes);
+      else
+        setInv((inval + 1) % totalroutes);
+    }
   }
 
   const addPolylineToMap = (
@@ -196,13 +203,16 @@ const HereMaps = () => {
       routeLine = new H.map.Group();
       routeLine.addObjects([routeOutline, routeArrows]);
     } else {
-      routeLine = new H.map.Polyline(linestring, {
+      const routeLine1 = new H.map.Polyline(linestring, {
         style: { strokeColor: color, lineWidth },
       });
+      routeLine = new H.map.Group();
+      routeLine.addObjects([routeLine1]);
     }
     mapObjects.current = [...mapObjects.current, routeLine];
     map.addObjects([routeLine]);
   };
+
   const clearMap = useCallback(() => {
     const filteredValues = mapObjects.current.filter((value) =>
       map.getObjects().includes(value)
@@ -214,8 +224,11 @@ const HereMaps = () => {
 
   const showSingleRoute = () => {
     if (!map || !singleRoute) return;
+    if (routes.length === 0)
+      return;
     clearMap();
     addMarkersToMap(map, [orv, dsv]);
+
     routes[currentRoute].forEach((section) => {
       let linestring = H.geo.LineString.fromFlexiblePolyline(section.polyline);
       addPolylineToMap(
@@ -230,8 +243,12 @@ const HereMaps = () => {
 
   const updateMap = () => {
     if (!routes || !map) return;
+    if (routes.length === 0)
+      return;
     clearMap();
     addMarkersToMap(map, [orv, dsv]);
+
+
     routes.forEach((route) => {
       route.forEach((section) => {
         let linestring = H.geo.LineString.fromFlexiblePolyline(
@@ -262,33 +279,40 @@ const HereMaps = () => {
     let departureTime = selectedDate;
     // departureTime.setMinutes(departureTime.getMinutes() + afterMinutes);
     // console.log(departureTime)
+    setRoutes([]);
+    setFetching(true);
+    setShowPm(false);
+    clearMap();
     const url = `${BASE_URL}/gettraveldata/origin=${origin.lat},${origin.lng
       }&dest=${dest.lat},${dest.lng
       }&departureTime=${departureTime.toISOString()}`;
 
-    clearMap();
+
     addMarkersToMap(map, [origin, dest]); // plot origin and destination on map
     fetch(url)
       .then((res) => res.json())
       .then((routes) => {
         setRoutes(routes);
-        // setFetching(false);
+        setTotalRoutes(routes.length + 1);
+        setFetching(false);
         setSingleRoute(false);
       })
       .catch((err) => {
         console.log(err);
+        setFetching(false);
       });
+    // setFetching(false);
   };
 
-  useEffect(fetchAndAddRoutes, [map, addMarkersToMap, orv, dsv, selectedDate, clearMap]);
-  useEffect(updateMap, [routes, map, addMarkersToMap, showPm, singleRoute, orv, dsv, clearMap]);
+  // useEffect(fetchAndAddRoutes, [map, addMarkersToMap, orv, dsv, selectedDate, clearMap]);
+
+  useEffect(updateMap, [routes, map, addMarkersToMap, showPm, singleRoute, clearMap]);
   useEffect(showSingleRoute, [
     routes,
     map,
     showPm,
     singleRoute,
     currentRoute,
-    orv, dsv,
     addMarkersToMap,
     clearMap,
   ]);
@@ -312,20 +336,27 @@ const HereMaps = () => {
     // create default ui
     H.ui.UI.createDefault(map, defaultLayers);
     window.addEventListener('resize', () => map.getViewPort().resize());
+
+    // var logContainer = document.createElement('button');
+    // logContainer.className = `${styles.log}`;
+    // logContainer.innerHTML = 'Legends';
+    // map.getElement().appendChild(logContainer);
+
     return () => {
-      window.removeEventListener("resize", () => map.getViewPort().resize()  );
+      window.removeEventListener("resize", () => map.getViewPort().resize());
     };
   }, []);
 
   return (
     <>
       <div className="page-header">
-        {/* <div>{inval}</div> */}
         <div id={styles.appbar}>
           <div ref={wrapperRef}>
             <div className={styles.input}>
               <div className={styles.origin}>
-                <Link to="/"><i className={`material-icons ${styles.icon}`}>&#xe5c4;</i></Link>
+                {/* <Link to="#" id={styles.icon}><FaIcons.FaBars
+                  onClick={showSidebar}/></Link> */}
+                <SideBar routes={routes} />
                 <div className={styles.input5}>
                   <i className={`material-icons ${styles.icon1}`}>&#xe55c;</i>
                   <input id={styles.input1} autoComplete="off"
@@ -393,29 +424,27 @@ const HereMaps = () => {
           <div className={styles.clearfix}></div>
 
           <div id={styles.bottom3}>
-            <Button id={styles.PMV}
-              style={{ textTransform: 'none', backgroundColor: bcol, color: tcol, }}
+            <Button id={styles.CMV}
+              style={{ textTransform: 'none', backgroundColor: (!showPm ? bcol : bcold), color: (!showPm ? tcol : tcold), }}
               onClick={() => {
-                return setShowPm(() => {
-                  customo();
-                  return true;
-                });
-              }}
-            >
-              PM 2.5
-          </Button>
-
-            <Button id={styles.CV}
-              style={{ textTransform: 'none', backgroundColor: bcold, color: tcold, }}
-              // color={col1}
-              onClick={() => {
-                customd();
                 return setShowPm(() => {
                   return false;
                 });
               }}
             >
               Congestion
+          </Button>
+
+            <Button id={styles.PMV}
+              style={{ textTransform: 'none', backgroundColor: (!showPm ? bcold : bcol), color: (!showPm ? tcold : tcol), }}
+              // color={col1}
+              onClick={() => {
+                return setShowPm(() => {
+                  return true;
+                });
+              }}
+            >
+              PM 2.5
           </Button>
 
             {/* <br /> */}
@@ -427,6 +456,9 @@ const HereMaps = () => {
                   value={null}
                   onChange={handleDateChange}
                   label=""
+                  InputProps={{
+                    disableUnderline: true,
+                  }}
                   inputVariant="standard"
                   onError={console.log}
                   ampm={false}
@@ -434,6 +466,12 @@ const HereMaps = () => {
                   format="yyyy/MM/DD HH:mm"
                 />
               </MuiPickersUtilsProvider>
+              <button className={styles.go} onClick={() => {
+                setInv(0);
+                fetchAndAddRoutes();
+                // updateMap();
+                // showSingleRoute();
+              }}>Go</button>
             </div>
 
             <div className={styles.clearfix}></div>
@@ -447,36 +485,43 @@ const HereMaps = () => {
         <div id={styles.bottombar}>
           <i className={`fas ${styles.prevb}`}
             onClick={() => {
-              setInv(((inval - 1) % 7 + 7) % 7);
+              setindexval(false);
               setRdisplay(true);
             }
             }
           >&#xf137;</i>
           <div id={styles.bottombart}>
             <span id={styles.bshow}>
-              {routes ? (
+              {fetching ? (
                 <>
-                  {inval === 0 ? "Showing all routes" : `Showing Route ${inval}`}
-                </>
-              ) : "No Routes available"}
+                  {"Fetching Routes..."}
+                </>)
+                : (
+                  <>
+                    {routes ? (
+                      <>
+                        {inval === 0 ? "Showing all routes" : `Showing Route ${inval}`}
+                      </>
+                    ) : "No Routes available"}
+                  </>)}
             </span>
 
             <br />
 
             <span id={styles.bshow6}>
-              {routes ? "6 Routes available" : null}
+              {(routes && !fetching) ? `${totalroutes - 1} Routes available` : null}
             </span>
           </div>
           <i className={`fas ${styles.nextb}`}
             onClick={() => {
-              setInv((inval + 1) % 7);
+              setindexval(true);
               setRdisplay(true);
             }
 
             }
           >&#xf138;</i>
 
-          {routes ? (
+          {(totalroutes !== 1) ? (
             <>
               {
                 rdisplay ? (

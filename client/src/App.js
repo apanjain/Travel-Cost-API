@@ -1,4 +1,4 @@
-import {BrowserRouter as Router, Redirect, Route, Switch} from 'react-router-dom';
+import { BrowserRouter as Router, Redirect, Route, Switch } from 'react-router-dom';
 import HereMaps from "routes/HereMaps";
 import Home from "routes/Home";
 
@@ -7,8 +7,8 @@ function App() {
     <>
       <Router>
         <Switch>
-          <Route exact path="/" render={() => <Home /> } />
-          <Route exact path="/map" render={() => <HereMaps />}/>
+          <Route exact path="/" render={() => <Home />} />
+          <Route exact path="/map" render={() => <HereMaps />} />
           <Route path="*" render={() => <Redirect to="/" />} />
         </Switch>
       </Router>
