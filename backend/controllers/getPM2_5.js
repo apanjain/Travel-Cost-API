@@ -5,63 +5,37 @@ let database = [];
 
 exports.updateDatabase = async () => {
   let newData = [];
-  const locations = [
-    "delhi/Alipur",
-    "delhi/anand-vihar",
-    "delhi/aya-nagar",
-    "delhi/delhi-institute-of-tool-engineering--wazirpur", //new
-    "delhi/dite-okhla",
-    "delhi/iti-jahangirpuri", //new
-    "delhi/iti-shahdra--jhilmil-industrial-area", //new
-    "delhi/jawaharlal-nehru-stadium",
-    "delhi/major-dhyan-chand-national-stadium", //new
-    "delhi/mandir-marg",
-    "delhi/mother-dairy-plant--parparganj", //new
-    "delhi/mundka",
-    "delhi/narela", //new
-    "delhi/pgdav-college--sriniwaspuri", //new
-    "delhi/pooth-khurd--bawana", //new
-    "delhi/punjabi-bagh", //new
-    "delhi/pusa",
-    "delhi/r.k.-puram", //new
-    "delhi/satyawati-college", //new
-    "delhi/shaheed-sukhdev-college-of-business-studies--rohini", //new
-    "delhi/sonia-vihar-water-treatment-plant-djb", //new
-    "delhi/sri-auribindo-marg", //new
-    "india/ghaziabad/indirapuram",
-    "india/ghaziabad/loni", //new
-    "india/new-delhi/us-embassy",
-    "india/noida/sector-1", //new
-    "india/noida/sector-125",
-  ]; // available locations for pm2.5 data
 
-  const getData = async (location, api_url) => {
+  const getData = async () => {
+    let lat1 = 28.08652,
+      lat2 = 28.921631,
+      long1 = 76.730347,
+      long2 = 77.631226;
+    const api_url = `https://api.waqi.info/map/bounds/?latlng=${lat1},${long1},${lat2},${long2}&token=${process.env.waqi_api_key}`;
     await axios
       .get(api_url)
       .then((res) => {
-        const arr = res.data.data.city.geo;
-        if (arr[0] < arr[1]) {
-          var latitude = arr[0];
-          var longitude = arr[1];
-        } else {
-          var latitude = arr[1];
-          var longitude = arr[0];
+        const arr = res && res.data ? res.data.data : null;
+        if (arr && arr.length > 0) {
+          for (let i in arr) {
+            if (!isNaN(arr[i].aqi)) {
+              newData = [
+                ...newData,
+                {
+                  latitude: arr[i].lat,
+                  longitude: arr[i].lon,
+                  pm: parseInt(arr[i].aqi),
+                },
+              ];
+            }
+          }
         }
-
-        const pm = res.data.data.iaqi.pm25.v;
-
-        newData = [...newData, { location, latitude, longitude, pm }];
       })
       .catch((err) => {
         console.log(err);
       });
   };
-
-  for (var i = 0; i < locations.length; i++) {
-    const api_url = `https://api.waqi.info/feed/${locations[i]}/?token=${process.env.waqi_api_key}`;
-    await getData(locations[i], api_url);
-  }
-
+  await getData();
   database = newData;
   console.log("Updated Database!");
   // console.log(database);
