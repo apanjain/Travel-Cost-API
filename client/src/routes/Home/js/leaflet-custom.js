@@ -1,5 +1,4 @@
 import L from 'leaflet';
-import { map } from 'leaflet';
 import '../App.css';
 import Places from "../../../assets/images/places.png";
 
