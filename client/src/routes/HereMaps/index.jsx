@@ -47,8 +47,8 @@ const HereMaps = () => {
   const wrapperRef1 = useRef(null);
   const [origin, setOrigin] = useState("");
   const [dest, setDest] = useState("");
-  const [orv, setOriginv] = useState({ lat: null, lng: null });
-  const [dsv, setDestv] = useState({ lat: null, lng: null });
+  const orv = useRef({ lat: null, lng: null });
+  const dsv = useRef({ lat: null, lng: null });
   var aurl =
     "https://autocomplete.geocoder.ls.hereapi.com/6.2/suggest.json?query=";
   var burl = "https://geocoder.ls.hereapi.com/6.2/geocode.json?locationid=";
@@ -128,14 +128,14 @@ const HereMaps = () => {
     const data = await response.json();
     setInv(0);
     // console.log(data);
-    setOriginv({
+    orv.current = {
       lat: data["response"]["view"][0]["result"][0]["location"][
         "displayPosition"
       ]["latitude"],
       lng: data["response"]["view"][0]["result"][0]["location"][
         "displayPosition"
       ]["longitude"],
-    });
+    };
     // addMarkersToMap(map, [{ lat: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["latitude"], lng: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["longitude"] }]);
   }
 
@@ -144,14 +144,14 @@ const HereMaps = () => {
     const data = await response.json();
     setInv(0);
     // console.log(data);
-    setDestv({
+    dsv.current = {
       lat: data["response"]["view"][0]["result"][0]["location"][
         "displayPosition"
       ]["latitude"],
       lng: data["response"]["view"][0]["result"][0]["location"][
         "displayPosition"
       ]["longitude"],
-    });
+    };
     // addMarkersToMap(map, [{ lat: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["latitude"], lng: data["response"]["view"][0]["result"][0]["location"]["displayPosition"]["longitude"] }]);
   }
 
@@ -242,7 +242,7 @@ const HereMaps = () => {
     if (!map || !singleRoute) return;
     if (routes.length === 0) return;
     clearMap();
-    addMarkersToMap(map, [orv, dsv]);
+    addMarkersToMap(map, [orv.current, dsv.current]);
 
     routes[currentRoute].forEach((section) => {
       let linestring = H.geo.LineString.fromFlexiblePolyline(section.polyline);
@@ -260,7 +260,7 @@ const HereMaps = () => {
     if (!routes || !map) return;
     if (routes.length === 0) return;
     clearMap();
-    addMarkersToMap(map, [orv, dsv]);
+    addMarkersToMap(map, [orv.current, dsv.current]);
 
     routes.forEach((route) => {
       route.forEach((section) => {
@@ -281,9 +281,9 @@ const HereMaps = () => {
   const fetchAndAddRoutes = () => {
     if (!map) return;
     // setFetching(true);
-    const origin = orv;
+    const origin = orv.current;
     if (origin.lat == null || origin.lng == null) return;
-    const dest = dsv;
+    const dest = dsv.current;
     if (dest.lat == null || dest.lng == null) return;
     if (selectedDate == null) return;
     let departureTime = selectedDate;
@@ -315,7 +315,7 @@ const HereMaps = () => {
     // setFetching(false);
   };
 
-  // useEffect(fetchAndAddRoutes, [map, addMarkersToMap, orv, dsv, selectedDate, clearMap]);
+  // useEffect(fetchAndAddRoutes, [map, addMarkersToMap, orv.current, dsv.current, selectedDate, clearMap]);
 
   useEffect(updateMap, [
     routes,
@@ -324,8 +324,6 @@ const HereMaps = () => {
     showPm,
     singleRoute,
     clearMap,
-    dsv,
-    orv,
   ]);
   useEffect(showSingleRoute, [
     routes,
@@ -335,8 +333,6 @@ const HereMaps = () => {
     currentRoute,
     addMarkersToMap,
     clearMap,
-    dsv,
-    orv,
   ]);
   useLayoutEffect(() => {
     if (!mapRef.current) return;
