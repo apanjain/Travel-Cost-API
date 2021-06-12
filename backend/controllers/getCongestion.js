@@ -1,46 +1,34 @@
 const axios = require("axios");
 const API_URL = "https://route.ls.hereapi.com/routing/7.2/calculateroute.json";
 
-async function getCongestionData(route, results, departureTime) {
-  let promises = [];
-  for (let i = 0; i < route.length; i++) {
-    let p = axios.get(API_URL, {
+async function calculateCongestion(locationsList, departureTime) {
+  const promises = locationsList.map((location) => {
+    return axios.get(API_URL, {
       params: {
-        waypoint0: `${route[i].begin.lat},${route[i].begin.lng}`,
-        waypoint1: `${route[i].end.lat},${route[i].end.lng}`,
+        waypoint0: `${location.departure.lat},${location.departure.lng}`,
+        waypoint1: `${location.arrival.lat},${location.arrival.lng}`,
         mode: "fastest;car;traffic:enabled",
         apiKey: process.env.here_api_key,
         departure: departureTime,
       },
     });
-    promises.push(p);
-  }
+  });
   try {
-    let responses = await Promise.all(promises);
-    let result = [];
-    for (let i = 0; i < route.length; i++) {
-      let { baseTime, travelTime } = responses[
-        i
-      ].data.response.route[0].summary;
-      let congestionValue = travelTime / baseTime;
-      let congestionColor =
-        route[i].transport.mode === "pedestrian"
+    const responses = await Promise.all(promises);
+    const congestionData = responses.map((response, index) => {
+      const { baseTime, travelTime } = response.data.response.route[0].summary;
+      const congestionValue = travelTime / baseTime;
+      return {
+        congestionValue,
+        congestionColor: locationsList[index].isPedestrian
           ? "green"
-          : getCongestionColor(congestionValue);
-
-      result = [...result, { ...route[i], congestionColor }];
-    }
-    results.push(result);
+          : getCongestionColor(congestionValue),
+      };
+    });
+    return congestionData;
   } catch (err) {
     console.log(err);
   }
-}
-async function calculateCongestion(routes, departureTime) {
-  let results = [];
-  for (let i = 0; i < routes.length; i++) {
-    await getCongestionData(routes[i], results, departureTime);
-  }
-  return results;
 }
 
 function getCongestionColor(congestionValue) {

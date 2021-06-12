@@ -41,7 +41,7 @@ exports.updateDatabase = async () => {
   // console.log(database);
 };
 
-exports.getPM2_5 = (lat, lng) => {
+exports.getPM2_5 = (lat, lng, currentDatabase) => {
   const x1 = lat;
   const y1 = lng;
 
@@ -58,7 +58,6 @@ exports.getPM2_5 = (lat, lng) => {
 
     return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
   }
-  const currentDatabase = [...database]; // use contant value for a particular calculation as database is updated every 10 seconds
   for (let i = 0; i < currentDatabase.length; i++) {
     const x2 = currentDatabase[i].latitude;
     const y2 = currentDatabase[i].longitude;
@@ -84,19 +83,43 @@ exports.getPMColor = (routes = [], minPm, maxPm) => {
   routes.forEach((route) => {
     colorizedPmRoutes = [
       ...colorizedPmRoutes,
-      route && route.length > 0
-        ? route.map((section) => {
-            const normalizedPm =
-              maxPm > minPm ? (section.pmValue - minPm) / (maxPm - minPm) : -1;
-            return {
-              ...section,
-              normalizedPm,
-              pmColor: getColorForPercentage(normalizedPm),
-            };
-          })
-        : {},
+      {
+        ...route,
+        sections:
+          route.sections && route.sections.length > 0
+            ? route.sections.map((section) => {
+                const normalizedPm =
+                  maxPm > minPm
+                    ? (section.travelSummary.pmValue - minPm) / (maxPm - minPm)
+                    : -1;
+                return {
+                  ...section,
+                  travelSummary: {
+                    ...section.travelSummary,
+                    normalizedPm,
+                    pmColor: getColorForPercentage(normalizedPm),
+                  },
+                };
+              })
+            : [],
+      },
     ];
   });
   // console.log(colorizedPmRoutes)
   return colorizedPmRoutes;
+};
+
+exports.calculatePmValuesList = async (locationsList) => {
+  const currentDatabase = [...database]; // use contant value for a particular calculation as database is updated every 10 seconds
+  const promises = locationsList.map((location) => {
+    return new Promise((resolve, reject) =>
+      resolve(this.getPM2_5(location.lat, location.lng, currentDatabase))
+    );
+  });
+  try {
+    const responses = await Promise.all(promises);
+    return responses;
+  } catch (err) {
+    console.log(err);
+  }
 };
