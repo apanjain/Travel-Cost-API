@@ -20,13 +20,11 @@ function getTravelData(req, res) {
   // validate data
   if (!origin || !dest) {
     const validate = [!origin, !dest];
-    res
-      .status(400)
-      .json(
-        ["Select a valid origin", "Select a valid destination"].filter(
-          (val, index) => validate[index]
-        )
-      );
+    res.status(400).json({
+      msg: ["Select a valid origin", "Select a valid destination"].filter(
+        (val, index) => validate[index]
+      ),
+    });
   }
   let intermodalApiCall = axios.get(API_URL, {
     params: {
