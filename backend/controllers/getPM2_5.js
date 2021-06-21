@@ -10,7 +10,7 @@ exports.updateDatabase = async () => {
     let lat1 = 28.08652,
       lat2 = 28.921631,
       long1 = 76.730347,
-      long2 = 77.631226;
+      long2 = 77.631226; // bouding coordinates for delhi region
     const api_url = `https://api.waqi.info/map/bounds/?latlng=${lat1},${long1},${lat2},${long2}&token=${process.env.waqi_api_key}`;
     await axios
       .get(api_url)

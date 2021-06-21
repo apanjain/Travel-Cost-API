@@ -5,7 +5,7 @@ const {
   getPMColor,
   calculatePmValuesList,
 } = require("../controllers/getPM2_5");
-const API_URL = "https://intermodal.router.hereapi.com/v8/routes";
+const API_URL = "https://router.hereapi.com/v8/routes";
 
 function getTravelData(req, res) {
   const queryStr = req && req.params ? req.params.query : null;
@@ -14,9 +14,10 @@ function getTravelData(req, res) {
   const dest = queryObj && queryObj.dest ? queryObj.dest : null;
   const departureTime =
     queryObj && queryObj.departureTime
-      ? new Date(queryObj.departureTime)
-      : new Date();
-  const modes = queryObj && queryObj.modes ? queryObj.modes.split(",") : null;
+      ? queryObj.departureTime
+      : new Date().toISOString();
+  const transportMode =
+    queryObj && queryObj.transportMode ? queryObj.transportMode : "car";
   // validate data
   if (!origin || !dest) {
     const validate = [!origin, !dest];
@@ -29,12 +30,13 @@ function getTravelData(req, res) {
   let intermodalApiCall = axios.get(API_URL, {
     params: {
       apiKey: process.env.here_api_key,
-      alternatives: 10,
+      alternatives: 6,
       destination: dest,
       origin: origin,
       return: "polyline,travelSummary",
-      "transit[modes]": "-subway,-lightRail,-highSpeedTrain,-cityTrain", // remove undesirable transports
-      departureTime: departureTime,
+      transportMode,
+      departureTime,
+      spans: "names,length",
     },
   });
   intermodalApiCall
@@ -111,28 +113,18 @@ async function fetchCongestionAndPM(route, maxPm, minPm, departureTime) {
           };
         })
       : [];
-  const startAndEndLocations =
+  const congestionParams =
     route && route.sections
       ? route.sections.map((section) => {
           return {
-            departure: {
-              lat: section.departure.place.location.lat,
-              lng: section.departure.place.location.lng,
-            },
-            arrival: {
-              lat: section.arrival.place.location.lat,
-              lng: section.arrival.place.location.lng,
-            },
-            isPedestrian: section.transport.mode === "pedestrian",
+            duration: section.travelSummary.duration,
+            baseDuration: section.travelSummary.baseDuration,
           };
         })
       : [];
   try {
     const pmValues = await calculatePmValuesList(midPointLocations);
-    const congestionData = await calculateCongestion(
-      startAndEndLocations,
-      departureTime
-    );
+    const congestionData = await calculateCongestion(congestionParams);
     minPm = Math.min(...pmValues);
     maxPm = Math.max(...pmValues);
     const updatedRoute = {
