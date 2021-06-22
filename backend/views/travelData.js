@@ -5,6 +5,7 @@ const {
   getPMColor,
   calculatePmValuesList,
 } = require("../controllers/getPM2_5");
+const { decode } = require("../utils/flexiblePolyline");
 const API_URL = "https://router.hereapi.com/v8/routes";
 
 function getTravelData(req, res) {
@@ -51,8 +52,7 @@ function getTravelData(req, res) {
           const updatedRoute = await fetchCongestionAndPM(
             routes[i],
             maxPm,
-            minPm,
-            departureTime
+            minPm
           );
           result = [...result, updatedRoute.route];
           (maxPm = updatedRoute.maxPm), (minPm = updatedRoute.minPm);
@@ -97,36 +97,70 @@ function getTravelData(req, res) {
       }
     });
 }
-async function fetchCongestionAndPM(route, maxPm, minPm, departureTime) {
-  const midPointLocations =
-    route && route.sections
-      ? route.sections.map((section) => {
-          return {
-            lat:
-              (section.departure.place.location.lat +
-                section.arrival.place.location.lat) /
-              2,
-            lng:
-              (section.departure.place.location.lng +
-                section.arrival.place.location.lng) /
-              2,
-          };
-        })
-      : [];
-  const congestionParams =
-    route && route.sections
-      ? route.sections.map((section) => {
-          return {
-            duration: section.travelSummary.duration,
-            baseDuration: section.travelSummary.baseDuration,
-          };
-        })
-      : [];
+async function fetchCongestionAndPM(route, maxPm, minPm) {
   try {
-    const pmValues = await calculatePmValuesList(midPointLocations);
+    const congestionParams =
+      route && route.sections
+        ? route.sections.map((section) => {
+            return {
+              duration: section.travelSummary.duration,
+              baseDuration: section.travelSummary.baseDuration,
+            };
+          })
+        : [];
+    const decodedPolylines =
+      route && route.sections
+        ? route.sections.map((section) => {
+            return decode(section.polyline).polyline;
+          })
+        : [];
+    const midPointLocations =
+      route && route.sections
+        ? route.sections.map((section, index) => {
+            let midSpans = [];
+            const spanSize = section.spans.length;
+            for (let j = 0; j < spanSize - 1; j++) {
+              const lat =
+                decodedPolylines[index][section.spans[j].offset][0] +
+                decodedPolylines[index][section.spans[j + 1].offset][0] / 2;
+              const lng =
+                decodedPolylines[index][section.spans[j].offset][1] +
+                decodedPolylines[index][section.spans[j + 1].offset][1] / 2;
+              midSpans = [...midSpans, { lat, lng }];
+            }
+            const lat =
+              decodedPolylines[index][section.spans[spanSize - 2].offset][0] +
+              decodedPolylines[index][section.spans[spanSize - 1].offset][0] /
+                2;
+            const lng =
+              decodedPolylines[index][section.spans[spanSize - 2].offset][1] +
+              decodedPolylines[index][section.spans[spanSize - 1].offset][1] /
+                2;
+            midSpans = [...midSpans, { lat, lng }];
+            return midSpans;
+          })
+        : [];
+    let spansList = [];
+    let exposure = 0;
+    for (let i = 0; i < route.sections.length; i++) {
+      const section = route.sections[i];
+      const pmValues = await calculatePmValuesList(midPointLocations[i]);
+      minPm = Math.min(...pmValues);
+      maxPm = Math.max(...pmValues);
+      let spans = [];
+      for (let j = 0; j < section.spans.length; j++) {
+        exposure += section.spans[j].length * pmValues[j];
+        spans = [
+          ...spans,
+          {
+            ...section.spans[j],
+            pmValue: pmValues[j],
+          },
+        ];
+      }
+      spansList = [...spansList, spans];
+    }
     const congestionData = await calculateCongestion(congestionParams);
-    minPm = Math.min(...pmValues);
-    maxPm = Math.max(...pmValues);
     const updatedRoute = {
       ...route,
       sections:
@@ -136,9 +170,10 @@ async function fetchCongestionAndPM(route, maxPm, minPm, departureTime) {
                 ...section,
                 travelSummary: {
                   ...section.travelSummary,
-                  pmValue: pmValues[i],
                   ...congestionData[i],
+                  exposure,
                 },
+                spans: spansList[i],
               };
             })
           : [],

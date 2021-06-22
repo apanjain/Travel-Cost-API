@@ -88,17 +88,19 @@ exports.getPMColor = (routes = [], minPm, maxPm) => {
         sections:
           route.sections && route.sections.length > 0
             ? route.sections.map((section) => {
-                const normalizedPm =
-                  maxPm > minPm
-                    ? (section.travelSummary.pmValue - minPm) / (maxPm - minPm)
-                    : -1;
+                const newSpans = section.spans.map((span) => {
+                  const normalizedPm =
+                    maxPm > minPm
+                      ? (span.pmValue - minPm) / (maxPm - minPm)
+                      : -1;
+                  return {
+                    ...span,
+                    pmColor: getColorForPercentage(normalizedPm),
+                  };
+                });
                 return {
                   ...section,
-                  travelSummary: {
-                    ...section.travelSummary,
-                    normalizedPm,
-                    pmColor: getColorForPercentage(normalizedPm),
-                  },
+                  spans: newSpans,
                 };
               })
             : [],
