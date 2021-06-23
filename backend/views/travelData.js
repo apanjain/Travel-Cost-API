@@ -171,12 +171,14 @@ async function fetchCongestionAndPM(route, maxPm, minPm) {
                 travelSummary: {
                   ...section.travelSummary,
                   ...congestionData[i],
-                  exposure,
                 },
                 spans: spansList[i],
               };
             })
           : [],
+      routeSummary: {
+        exposure,
+      },
     };
     // console.log(updatedRoute);
     return { route: updatedRoute, maxPm, minPm };
