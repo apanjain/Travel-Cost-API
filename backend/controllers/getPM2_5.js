@@ -10,7 +10,7 @@ exports.updateDatabase = async () => {
     let lat1 = 28.08652,
       lat2 = 28.921631,
       long1 = 76.730347,
-      long2 = 77.631226;
+      long2 = 77.631226; // bouding coordinates for delhi region
     const api_url = `https://api.waqi.info/map/bounds/?latlng=${lat1},${long1},${lat2},${long2}&token=${process.env.waqi_api_key}`;
     await axios
       .get(api_url)
@@ -41,7 +41,7 @@ exports.updateDatabase = async () => {
   // console.log(database);
 };
 
-exports.getPM2_5 = (lat, lng) => {
+exports.getPM2_5 = (lat, lng, currentDatabase) => {
   const x1 = lat;
   const y1 = lng;
 
@@ -58,7 +58,6 @@ exports.getPM2_5 = (lat, lng) => {
 
     return 12742 * Math.asin(Math.sqrt(a)); // 2 * R; R = 6371 km
   }
-  const currentDatabase = [...database]; // use contant value for a particular calculation as database is updated every 10 seconds
   for (let i = 0; i < currentDatabase.length; i++) {
     const x2 = currentDatabase[i].latitude;
     const y2 = currentDatabase[i].longitude;
@@ -84,19 +83,45 @@ exports.getPMColor = (routes = [], minPm, maxPm) => {
   routes.forEach((route) => {
     colorizedPmRoutes = [
       ...colorizedPmRoutes,
-      route && route.length > 0
-        ? route.map((section) => {
-            const normalizedPm =
-              maxPm > minPm ? (section.pmValue - minPm) / (maxPm - minPm) : -1;
-            return {
-              ...section,
-              normalizedPm,
-              pmColor: getColorForPercentage(normalizedPm),
-            };
-          })
-        : {},
+      {
+        ...route,
+        sections:
+          route.sections && route.sections.length > 0
+            ? route.sections.map((section) => {
+                const newSpans = section.spans.map((span) => {
+                  const normalizedPm =
+                    maxPm > minPm
+                      ? (span.pmValue - minPm) / (maxPm - minPm)
+                      : -1;
+                  return {
+                    ...span,
+                    pmColor: getColorForPercentage(normalizedPm),
+                  };
+                });
+                return {
+                  ...section,
+                  spans: newSpans,
+                };
+              })
+            : [],
+      },
     ];
   });
   // console.log(colorizedPmRoutes)
   return colorizedPmRoutes;
+};
+
+exports.calculatePmValuesList = async (locationsList) => {
+  const currentDatabase = [...database]; // use contant value for a particular calculation as database is updated every 10 seconds
+  const promises = locationsList.map((location) => {
+    return new Promise((resolve, reject) =>
+      resolve(this.getPM2_5(location.lat, location.lng, currentDatabase))
+    );
+  });
+  try {
+    const responses = await Promise.all(promises);
+    return responses;
+  } catch (err) {
+    console.log(err);
+  }
 };
